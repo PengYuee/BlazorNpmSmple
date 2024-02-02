@@ -1,0 +1,50 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<JsLibRoot>WebLib\</JsLibRoot>
+		<DefaultItemExcludes>$(DefaultItmeExcludes);$(JsLibRoot)node_modules\**</DefaultItemExcludes>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Remove="WebLib\src\BlazorApp1.lib.module.ts" />
+		<None Remove="WebLib\src\common.ts" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<TypeScriptCompile Include="WebLib\src\BlazorApp1.lib.module.ts" />
+		<TypeScriptCompile Include="WebLib\src\common.ts" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="wwwroot\js\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Update="WebLib\package.json">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</Content>
+		<Content Update="WebLib\tsconfig.json">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+	
+	<Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug'  Or '$(Configuration)' == 'Release' ">
+		<!-- Ensure Node.js is installed -->
+		<Exec Command="node --version" ContinueOnError="true">
+			<Output TaskParameter="ExitCode" PropertyName="ErrorCode" />
+		</Exec>
+		<Error Condition="'$(ErrorCode)' != '0'" Text="Node.js is required to build and run this project. To continue, please install Node.js from https://nodejs.org/, and then restart your command prompt or IDE." />
+		<Message Importance="high" Text="正在使用pnpm活力值编译脚本js,如果没有pnpm请使用`npm install -g pnpm`命令安装" />
+		<Exec WorkingDirectory="$(JsLibRoot)" Command="pnpm install" Condition=" !Exists('$(JsLibRoot)node_modules')  Or '$(Configuration)' == 'Release' " />
+		<Exec WorkingDirectory="$(JsLibRoot)" Command="pnpm run build" Condition=" '$(Configuration)' == 'Release' " />
+		<Exec WorkingDirectory="$(JsLibRoot)" Command="pnpm run dev" Condition=" '$(Configuration)' != 'Release' " />
+	</Target>
+
+	<Target Name="PublishRunWebpack" AfterTargets="ComputeFilesToPublish">
+		<!-- As part of publishing, ensure the JS resources are freshly built in production mode -->
+		<Exec WorkingDirectory="$(JsLibRoot)" Command="pnpm install" />
+		<Exec WorkingDirectory="$(JsLibRoot)" Command="pnpm run build" />
+	</Target>
+</Project>
